@@ -4,7 +4,7 @@ from scipy.spatial import cKDTree
 import time
 
 
-# ---------- Материалы ----------
+
 class Material:
     def __init__(self, color, reflection=0.0, refraction=0.0, refractive_index=1.0, emission=None):
         self.color = np.array(color, dtype=np.float64)
@@ -14,7 +14,7 @@ class Material:
         self.emission = np.array(emission, dtype=np.float64) if emission is not None else None
 
 
-# ---------- Объекты сцены ----------
+
 class Sphere:
     def __init__(self, center, radius, material):
         self.center = np.array(center)
@@ -103,7 +103,7 @@ class OrientedBox:
         return t, hit, world_normal, self.material
 
 
-# ---------- Photon Map с KD-деревом ----------
+
 class PhotonMap:
     def __init__(self):
         self.positions = []
@@ -135,7 +135,7 @@ class PhotonMap:
         return total / count
 
 
-# ---------- Утилиты ----------
+
 def normalize(v):
     norm = np.linalg.norm(v)
     return v / norm if norm > 0 else v
@@ -163,13 +163,13 @@ def fixed_rotation_matrix():
     return Rz @ Rx
 
 
-# ---------- Параметры ----------
+
 WIDTH, HEIGHT = 800, 600
 camera_pos = np.array([0, 3, -20])
 MAX_DEPTH = 4
 BACKGROUND = np.array([0.0, 0.0, 0.0])
 
-# ---------- Сцена ----------
+
 light_pos = np.array([10, 30, -10])
 objects = [
     Plane([0, -5, 0], [0, 1, 0], Material([0.8, 0.8, 0.8], reflection=0.2)),
@@ -181,7 +181,7 @@ objects = [
 ]
 
 
-# ---------- Backward Ray Tracing ----------
+
 def backward_tracing(ray_origin, ray_dir, depth):
     if depth > MAX_DEPTH:
         return BACKGROUND
@@ -240,7 +240,6 @@ def backward_tracing(ray_origin, ray_dir, depth):
     )
 
 
-# ---------- Path Tracing ----------
 def trace_path(ray_origin, ray_dir, depth):
     if depth >= MAX_DEPTH:
         return np.zeros(3)
@@ -260,11 +259,10 @@ def trace_path(ray_origin, ray_dir, depth):
     if material.emission is not None:
         return material.emission
 
-    # Зеркальное отражение
+
     reflected_dir = normalize(ray_dir - 2 * np.dot(ray_dir, normal) * normal)
     reflected_color = trace_path(hit + normal * 1e-4, reflected_dir, depth + 1)
 
-    # Диффузное отражение (как у тебя)
     u = np.random.rand()
     v = np.random.rand()
     r = np.sqrt(u)
@@ -332,17 +330,14 @@ def trace_photon(ray_origin, ray_dir, power, depth, photon_map):
         trace_photon(hit + normal * 1e-4, world_dir, power * material.color, depth + 1, photon_map)
 
 
-# ---------- Photon Mapping Rendering ----------
+
 def shade_with_reflection(hit, normal, material, depth, photon_map):
-    # Базовое освещение от фотонной карты
     base_color = material.color * photon_map.estimate_radiance(hit, normal, radius=0.1)
 
     if depth >= MAX_DEPTH or material.reflection <= 0:
         return base_color
 
-    # Отражённый луч
     reflected_dir = normalize(reflect(normalize(hit - camera_pos), normal))
-    # Найдём ближайший объект по отражённому лучу
     hit_data = None
     min_t = float('inf')
     for obj in objects:
@@ -394,7 +389,6 @@ def render_photon_mapping(filename):
     image.save(filename)
 
 
-# ---------- Рендеринг ----------
 def render(tracing_function, filename):
     image = Image.new("RGB", (WIDTH, HEIGHT))
     pixels = image.load()
